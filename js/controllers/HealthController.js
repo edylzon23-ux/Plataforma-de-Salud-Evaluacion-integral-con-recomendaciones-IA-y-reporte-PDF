@@ -1,61 +1,82 @@
 // ===== CONTROLADOR DE SALUD =====
 
 class HealthController {
-    
+
     static async showNuevoRegistro() {
         HealthFormView.resetForm();
         AppController.showPage('nuevo-registro');
     }
-    
+
     static async enviarRegistro() {
-        const validation = HealthFormView.validateForm();
-        if (!validation.valid) return;
-        
-        const datosRegistro = HealthFormView.getFormData();
-        
-        try {
-            HealthFormView.setSubmitButtonLoading(true);
-            
-            // Generar recomendaciones con IA
-            const analisis = await IAModel.generarRecomendaciones(datosRegistro);
-            
-            // Agregar datos del análisis
-            datosRegistro.imc = parseFloat(analisis.imc);
-            datosRegistro.categoria_imc = analisis.categoria_imc;
-            datosRegistro.condicion_salud_general = analisis.condicion_salud_general;
-            datosRegistro.riesgo_cardiovascular = analisis.riesgo_cardiovascular;
-            datosRegistro.recomendaciones_ia = JSON.stringify(analisis.recomendaciones);
-            
-            // Guardar en la base de datos
-            const result = await HealthRecordModel.saveRecord(datosRegistro);
-            
-            if (result.success) {
-                AppState.ultimoAnalisis = { registro: result.data, analisis: analisis };
-                this.mostrarResultado(result.data, analisis);
-                AppController.showPage('resultado');
-                HealthFormView.resetForm();
-                showToast('✅ Registro guardado y analizado con IA');
-            } else {
-                HealthFormView.showError(result.error || 'Error al guardar');
-            }
-        } catch (error) {
-            console.error('Error al guardar:', error);
-            HealthFormView.showError(error.message || 'Error al guardar');
-        } finally {
-            HealthFormView.setSubmitButtonLoading(false);
-        }
+    const validation = HealthFormView.validateForm();
+    if (!validation.valid) return;
+    
+    let datosRegistro = HealthFormView.getFormData();
+    
+    // Validaciones de rango
+    if (datosRegistro.peso_kg < 20 || datosRegistro.peso_kg > 300) {
+        HealthFormView.showError('El peso debe estar entre 20 y 300 kg');
+        return;
     }
     
+    if (datosRegistro.talla_cm < 50 || datosRegistro.talla_cm > 250) {
+        HealthFormView.showError('La talla debe estar entre 50 y 250 cm');
+        return;
+    }
+    
+    // Validar rangos 1-10
+    if (datosRegistro.calidad_alimentacion < 1 || datosRegistro.calidad_alimentacion > 10) {
+        datosRegistro.calidad_alimentacion = 5;
+    }
+    
+    if (datosRegistro.nivel_estres < 1 || datosRegistro.nivel_estres > 10) {
+        datosRegistro.nivel_estres = 5;
+    }
+    
+    if (datosRegistro.nivel_ansiedad < 1 || datosRegistro.nivel_ansiedad > 10) {
+        datosRegistro.nivel_ansiedad = 5;
+    }
+    
+    try {
+        HealthFormView.setSubmitButtonLoading(true);
+        
+        const analisis = await IAModel.generarRecomendaciones(datosRegistro);
+        
+        datosRegistro.imc = parseFloat(analisis.imc);
+        datosRegistro.categoria_imc = analisis.categoria_imc;
+        datosRegistro.condicion_salud_general = analisis.condicion_salud_general;
+        datosRegistro.riesgo_cardiovascular = analisis.riesgo_cardiovascular;
+        datosRegistro.recomendaciones_ia = JSON.stringify(analisis.recomendaciones);
+        
+        const result = await HealthRecordModel.saveRecord(datosRegistro);
+        
+        if (result.success) {
+            window.AppState.ultimoAnalisis = { registro: result.data, analisis: analisis };
+            HealthController.mostrarResultado(result.data, analisis);
+            window.AppController.showPage('resultado');
+            HealthFormView.resetForm();
+            window.showToast('✅ Registro guardado y analizado con IA');
+        } else {
+            HealthFormView.showError(result.error || 'Error al guardar');
+        }
+        
+    } catch (error) {
+        console.error('Error al guardar:', error);
+        HealthFormView.showError(error.message || 'Error al guardar');
+    } finally {
+        HealthFormView.setSubmitButtonLoading(false);
+    }
+}
     static mostrarResultado(registro, analisis) {
         const riesgoColor = {
             bajo: '#10B981', moderado: '#F59E0B', alto: '#EF4444', muy_alto: '#7F1D1D'
         };
-        
+
         const condicionColor = {
             'Excelente': '#10B981', 'Buena': '#34D399', 'Regular': '#F59E0B',
             'Deficiente': '#EF4444', 'Crítica': '#7F1D1D'
         };
-        
+
         const html = `
             <div class="resultado-cards">
                 <div class="resultado-card">
@@ -81,11 +102,11 @@ class HealthController {
                 </div>
             </div>
         `;
-        
+
         const resultadoContent = document.getElementById('resultado-content');
         if (resultadoContent) resultadoContent.innerHTML = html;
     }
-    
+
     static async descargarAnalisisPDF() {
         if (!AppState.ultimoAnalisis) {
             showToast('No hay análisis para exportar');
@@ -94,7 +115,7 @@ class HealthController {
         await PDFModel.generarAnalisisPDF(AppState.ultimoAnalisis.analisis, AppState.ultimoAnalisis.registro);
         showToast('✅ PDF descargado');
     }
-    
+
     static async exportarHistorialPDF() {
         const result = await HealthRecordModel.getAllRecords(AppState.currentUser.id);
         if (result.success && result.data.length > 0) {
@@ -104,7 +125,7 @@ class HealthController {
             showToast('No hay registros para exportar');
         }
     }
-    
+
     static async exportarRecomendacionesPDF() {
         const result = await HealthRecordModel.getLastRecord(AppState.currentUser.id);
         if (result.success && result.data) {
@@ -114,7 +135,7 @@ class HealthController {
             showToast('No hay recomendaciones para exportar');
         }
     }
-    
+
     static async loadHistorial() {
         HistorialView.showLoading();
         const result = await HealthRecordModel.getAllRecords(AppState.currentUser.id);
