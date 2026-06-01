@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Plataforma Salud · Salud Universitaria (MVC)</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  
+  <!-- Librerías externas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ===================== AUTH SCREEN ===================== -->
+<div id="auth-screen" class="screen active">
+  <div class="auth-bg">
+    <div class="auth-orb auth-orb-1"></div>
+    <div class="auth-orb auth-orb-2"></div>
+    <div class="auth-orb auth-orb-3"></div>
+  </div>
+  <div class="auth-container">
+    <div class="auth-brand">
+      <div class="brand-icon">⚕️</div>
+      <h1 class="brand-name">Mi Plataforma <em>Salud</em></h1>
+      <p class="brand-sub">Salud Universitaria · FICCT</p>
+    </div>
+
+    <!-- Login Form -->
+    <div id="login-form" class="auth-card">
+      <h2>Bienvenido de vuelta</h2>
+      <p class="auth-desc">Ingresa a tu perfil de salud universitaria</p>
+      <div class="form-group">
+        <label>Correo electrónico</label>
+        <input type="email" id="login-email" placeholder="tu@email.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div id="login-error" class="form-error hidden"></div>
+      <button class="btn-primary" id="btn-login">
+        <span>Iniciar sesión</span>
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+      </button>
+      <div class="auth-demo">
+        <span>Demo:</span> demo@salud.edu / demo123
+      </div>
+      <p class="auth-switch">¿No tienes cuenta? <a href="#" id="show-register">Regístrate aquí</a></p>
+    </div>
+
+    <!-- Register Form -->
+    <div id="register-form" class="auth-card hidden">
+      <h2>Crear cuenta</h2>
+      <p class="auth-desc">Completa tu perfil de salud universitaria</p>
+
+      <div class="register-steps">
+        <div class="step active" data-step="1">1. Datos Personales</div>
+        <div class="step" data-step="2">2. Universitarios</div>
+        <div class="step" data-step="3">3. Acceso</div>
+      </div>
+
+      <div id="reg-step-1" class="reg-step">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nombres <span class="req">*</span></label>
+            <input type="text" id="reg-nombres" placeholder="Ej: Juan Carlos">
+          </div>
+          <div class="form-group">
+            <label>Apellidos <span class="req">*</span></label>
+            <input type="text" id="reg-apellidos" placeholder="Ej: García López">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Carnet de Identidad <span class="req">*</span></label>
+            <input type="text" id="reg-carnet" placeholder="Ej: 12345678">
+          </div>
+          <div class="form-group">
+            <label>Fecha de Nacimiento <span class="req">*</span></label>
+            <input type="date" id="reg-fecha-nac">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Sexo <span class="req">*</span></label>
+            <select id="reg-sexo">
+              <option value="">Seleccionar...</option>
+              <option value="masculino">Masculino</option>
+              <option value="femenino">Femenino</option>
+              <option value="otro">Prefiero no decir</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="tel" id="reg-telefono" placeholder="Ej: 70012345">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Dirección</label>
+          <input type="text" id="reg-direccion" placeholder="Ej: Av. Busch #123">
+        </div>
+        <div class="form-group">
+          <label>Ciudad</label>
+          <input type="text" id="reg-ciudad" placeholder="Ej: Santa Cruz de la Sierra">
+        </div>
+        <button class="btn-primary" id="next-step-1">Siguiente →</button>
+      </div>
+
+      <div id="reg-step-2" class="reg-step hidden">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Código Universitario</label>
+            <input type="text" id="reg-codigo-uni" placeholder="Ej: 222008458">
+          </div>
+          <div class="form-group">
+            <label>Semestre</label>
+            <select id="reg-semestre">
+              <option value="">Seleccionar...</option>
+              <option value="1">1° Semestre</option><option value="2">2° Semestre</option>
+              <option value="3">3° Semestre</option><option value="4">4° Semestre</option>
+              <option value="5">5° Semestre</option><option value="6">6° Semestre</option>
+              <option value="7">7° Semestre</option><option value="8">8° Semestre</option>
+              <option value="9">9° Semestre</option><option value="10">10° Semestre</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Carrera</label>
+          <input type="text" id="reg-carrera" placeholder="Ej: Ingeniería en Sistemas">
+        </div>
+        <div class="form-group">
+          <label>Facultad</label>
+          <select id="reg-facultad">
+            <option value="">Seleccionar...</option>
+            <option value="FICCT">FICCT - Ing. en Ciencias de la Computación</option>
+            <option value="FCE">FCE - Ciencias Económicas</option>
+            <option value="FD">FD - Derecho</option>
+            <option value="FM">FM - Medicina</option>
+            <option value="FI">FI - Ingeniería Civil</option>
+            <option value="FCEYE">FCEYE - Ciencias del Ambiente</option>
+            <option value="Otra">Otra facultad</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="btn-secondary" id="prev-step-2">← Atrás</button>
+          <button class="btn-primary" id="next-step-2">Siguiente →</button>
+        </div>
+      </div>
+
+      <div id="reg-step-3" class="reg-step hidden">
+        <div class="form-group">
+          <label>Correo electrónico <span class="req">*</span></label>
+          <input type="email" id="reg-email" placeholder="tu@correo.com">
+        </div>
+        <div class="form-group">
+          <label>Contraseña <span class="req">*</span></label>
+          <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres">
+        </div>
+        <div class="form-group">
+          <label>Confirmar contraseña <span class="req">*</span></label>
+          <input type="password" id="reg-password-confirm" placeholder="Repite tu contraseña">
+        </div>
+        <div id="register-error" class="form-error hidden"></div>
+        <div class="btn-row">
+          <button class="btn-secondary" id="prev-step-3">← Atrás</button>
+          <button class="btn-primary" id="btn-register">Crear cuenta ✓</button>
+        </div>
+      </div>
+
+      <p class="auth-switch">¿Ya tienes cuenta? <a href="#" id="show-login">Inicia sesión</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== APP SCREEN ===================== -->
+<div id="app-screen" class="screen hidden">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-icon-sm">⚕️</span>
+      <span>MPS</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-page="dashboard" id="nav-dashboard">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        <span>Dashboard</span>
+      </a>
+      <a href="#" class="nav-item" data-page="nuevo-registro" id="nav-nuevo-registro">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        <span>Nuevo Registro</span>
+      </a>
+      <a href="#" class="nav-item" data-page="historial" id="nav-historial">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        <span>Mi Historial</span>
+      </a>
+      <a href="#" class="nav-item" data-page="antecedentes" id="nav-antecedentes">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span>Antecedentes</span>
+      </a>
+      <a href="#" class="nav-item" data-page="perfil" id="nav-perfil">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        <span>Mi Perfil</span>
+      </a>
+      <div class="nav-divider" id="admin-divider" style="display:none">
+        <span>Administración</span>
+      </div>
+      <a href="#" class="nav-item" data-page="admin" id="admin-link" style="display:none">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        <span>Panel Admin</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-mini" id="sidebar-user">
+        <div class="user-avatar" id="sidebar-avatar">U</div>
+        <div class="user-info">
+          <span class="user-name" id="sidebar-name">Usuario</span>
+          <span class="user-role" id="sidebar-role">Estudiante</span>
+        </div>
+      </div>
+      <button class="btn-logout" id="btn-logout">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="topbar">
+      <button class="menu-toggle" id="menu-toggle">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div class="topbar-actions">
+        <div class="notif-badge" id="notif-btn">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGES (serán llenadas por las vistas) -->
+    <!-- DASHBOARD PAGE -->
+<div id="page-dashboard" class="page active">
+  <div class="page-header">
+    <h2>Bienvenido, <span id="dash-nombre">Usuario</span> 👋</h2>
+    <p>Resumen de tu estado de salud universitaria</p>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card stat-imc">
+      <div class="stat-icon">⚖️</div>
+      <div class="stat-info">
+        <span class="stat-value" id="dash-imc">—</span>
+        <span class="stat-label">Último IMC</span>
+        <span class="stat-sub" id="dash-imc-cat">Sin registros</span>
+      </div>
+    </div>
+    <div class="stat-card stat-peso">
+      <div class="stat-icon">📏</div>
+      <div class="stat-info">
+        <span class="stat-value" id="dash-peso">— kg</span>
+        <span class="stat-label">Último Peso</span>
+        <span class="stat-sub" id="dash-talla">Talla: — cm</span>
+      </div>
+    </div>
+    <div class="stat-card stat-riesgo">
+      <div class="stat-icon">❤️</div>
+      <div class="stat-info">
+        <span class="stat-value" id="dash-riesgo">—</span>
+        <span class="stat-label">Riesgo Cardiovascular</span>
+        <span class="stat-sub" id="dash-condicion">—</span>
+      </div>
+    </div>
+    <div class="stat-card stat-registros">
+      <div class="stat-icon">📋</div>
+      <div class="stat-info">
+        <span class="stat-value" id="dash-total-reg">0</span>
+        <span class="stat-label">Registros Totales</span>
+        <span class="stat-sub" id="dash-ultimo-reg">Sin registros</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="card">
+      <div class="card-header">
+        <h3>Progreso IMC</h3>
+        <span class="badge badge-blue">Últimos 10 registros</span>
+      </div>
+      <canvas id="imc-chart" height="200"></canvas>
+      <p class="chart-empty" id="chart-empty">Registra tus datos para ver tu progreso</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Últimas Recomendaciones</h3>
+        <button class="btn-sm" id="btn-export-recomendaciones" style="width:auto;padding:0.3rem 0.8rem;">📄 Exportar PDF</button>
+      </div>
+      <div id="dash-recomendaciones" class="recomendaciones-list">
+        <div class="empty-state">
+          <span>📊</span>
+          <p>Realiza tu primer registro para recibir recomendaciones personalizadas</p>
+          <button class="btn-sm" onclick="AppController.showPage('nuevo-registro')">Registrar ahora</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt-4">
+    <div class="card-header">
+      <h3>Acción rápida</h3>
+    </div>
+    <div class="quick-actions">
+      <button class="quick-btn" onclick="AppController.showPage('nuevo-registro')">
+        <span class="qb-icon">➕</span>
+        <span>Nuevo registro</span>
+      </button>
+      <button class="quick-btn" onclick="AppController.showPage('historial')">
+        <span class="qb-icon">📋</span>
+        <span>Ver historial</span>
+      </button>
+      <button class="quick-btn" onclick="AppController.showPage('antecedentes')">
+        <span class="qb-icon">📝</span>
+        <span>Antecedentes</span>
+      </button>
+      <button class="quick-btn" onclick="AppController.showPage('perfil')">
+        <span class="qb-icon">👤</span>
+        <span>Mi perfil</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- NUEVO REGISTRO PAGE -->
+<div id="page-nuevo-registro" class="page">
+  <div class="page-header">
+    <h2>Nuevo Registro de Salud</h2>
+    <p>Completa todos los campos para obtener tu análisis personalizado</p>
+  </div>
+
+  <div class="registro-form-container">
+    <div class="registro-tabs">
+      <button class="tab-btn active" data-tab="medidas">📐 Medidas</button>
+      <button class="tab-btn" data-tab="signos">💓 Signos Vitales</button>
+      <button class="tab-btn" data-tab="habitos">🏃 Hábitos</button>
+      <button class="tab-btn" data-tab="mental">🧠 Salud Mental</button>
+    </div>
+
+    <form id="health-form">
+      <!-- Tab: Medidas -->
+      <div id="tab-medidas" class="tab-content active">
+        <div class="form-section">
+          <h4>📐 Medidas Corporales</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Peso (kg) <span class="req">*</span></label>
+              <input type="number" id="h-peso" step="0.1" min="20" max="300" placeholder="Ej: 70.5">
+              <span class="input-hint">Kilogramos</span>
+            </div>
+            <div class="form-group">
+              <label>Talla (cm) <span class="req">*</span></label>
+              <input type="number" id="h-talla" step="0.1" min="50" max="250" placeholder="Ej: 175">
+              <span class="input-hint">Centímetros</span>
+            </div>
+          </div>
+          <div id="imc-preview" class="imc-preview hidden">
+            <div class="imc-preview-value">IMC: <strong id="imc-val">—</strong></div>
+            <div class="imc-preview-cat" id="imc-cat-preview">—</div>
+            <div class="imc-bar-container">
+              <div class="imc-bar">
+                <div class="imc-indicator" id="imc-indicator"></div>
+              </div>
+              <div class="imc-scale">
+                <span>Bajo</span><span>Normal</span><span>Sobrepeso</span><span>Obesidad</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-nav">
+          <button type="button" class="btn-primary" onclick="HealthFormView.showTab('signos', document.querySelector('[data-tab=signos]'))">Siguiente: Signos Vitales →</button>
+        </div>
+      </div>
+
+      <!-- Tab: Signos Vitales -->
+      <div id="tab-signos" class="tab-content">
+        <div class="form-section">
+          <h4>💓 Signos Vitales</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Presión Sistólica (mmHg)</label>
+              <input type="number" id="h-presion-s" min="60" max="300" placeholder="Ej: 120">
+            </div>
+            <div class="form-group">
+              <label>Presión Diastólica (mmHg)</label>
+              <input type="number" id="h-presion-d" min="40" max="200" placeholder="Ej: 80">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Frecuencia Cardiaca (lpm)</label>
+              <input type="number" id="h-fc" min="30" max="250" placeholder="Ej: 72">
+            </div>
+            <div class="form-group">
+              <label>Temperatura (°C)</label>
+              <input type="number" id="h-temp" step="0.1" min="30" max="45" placeholder="Ej: 36.5">
+            </div>
+          </div>
+          <div class="form-group half">
+            <label>Saturación de Oxígeno (%)</label>
+            <input type="number" id="h-spo2" min="50" max="100" placeholder="Ej: 98">
+          </div>
+        </div>
+        <div class="tab-nav between">
+          <button type="button" class="btn-secondary" onclick="HealthFormView.showTab('medidas', document.querySelector('[data-tab=medidas]'))">← Atrás</button>
+          <button type="button" class="btn-primary" onclick="HealthFormView.showTab('habitos', document.querySelector('[data-tab=habitos]'))">Siguiente: Hábitos →</button>
+        </div>
+      </div>
+
+      <!-- Tab: Hábitos -->
+      <div id="tab-habitos" class="tab-content">
+        <div class="form-section">
+          <h4>🏃 Hábitos de Vida</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Horas de sueño diario</label>
+              <input type="number" id="h-sueno" step="0.5" min="0" max="24" placeholder="Ej: 7.5">
+            </div>
+            <div class="form-group">
+              <label>Vasos de agua al día</label>
+              <input type="number" id="h-agua" min="0" max="30" placeholder="Ej: 8">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Nivel de Actividad Física</label>
+            <div class="radio-cards">
+              <label class="radio-card"><input type="radio" name="actividad" value="sedentario"><span>🛋️ Sedentario</span></label>
+              <label class="radio-card"><input type="radio" name="actividad" value="leve"><span>🚶 Leve</span></label>
+              <label class="radio-card"><input type="radio" name="actividad" value="moderado"><span>🚴 Moderado</span></label>
+              <label class="radio-card"><input type="radio" name="actividad" value="intenso"><span>🏋️ Intenso</span></label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Calidad de Alimentación (1–10)</label>
+            <div class="range-wrapper">
+              <input type="range" id="h-alimentacion" min="1" max="10" value="5">
+              <span class="range-val" id="alimentacion-val">5</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group toggle-group">
+              <label>¿Consume alcohol?</label>
+              <label class="toggle"><input type="checkbox" id="h-alcohol"><span class="toggle-slider"></span></label>
+            </div>
+            <div class="form-group toggle-group">
+              <label>¿Fuma?</label>
+              <label class="toggle"><input type="checkbox" id="h-fuma"><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+        </div>
+        <div class="tab-nav between">
+          <button type="button" class="btn-secondary" onclick="HealthFormView.showTab('signos', document.querySelector('[data-tab=signos]'))">← Atrás</button>
+          <button type="button" class="btn-primary" onclick="HealthFormView.showTab('mental', document.querySelector('[data-tab=mental]'))">Siguiente: Salud Mental →</button>
+        </div>
+      </div>
+
+      <!-- Tab: Mental -->
+      <div id="tab-mental" class="tab-content">
+        <div class="form-section">
+          <h4>🧠 Salud Mental y Bienestar</h4>
+          <div class="form-group">
+            <label>Nivel de Estrés (1–10)</label>
+            <div class="range-wrapper">
+              <input type="range" id="h-estres" min="1" max="10" value="5">
+              <span class="range-val" id="estres-val">5</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Nivel de Ansiedad (1–10)</label>
+            <div class="range-wrapper">
+              <input type="range" id="h-ansiedad" min="1" max="10" value="5">
+              <span class="range-val" id="ansiedad-val">5</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Estado de Ánimo General</label>
+            <div class="mood-cards">
+              <label class="mood-card"><input type="radio" name="estado_animo" value="excelente"><span>😄 Excelente</span></label>
+              <label class="mood-card"><input type="radio" name="estado_animo" value="bueno"><span>🙂 Bueno</span></label>
+              <label class="mood-card"><input type="radio" name="estado_animo" value="regular"><span>😐 Regular</span></label>
+              <label class="mood-card"><input type="radio" name="estado_animo" value="malo"><span>😟 Malo</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div id="registro-error" class="form-error hidden"></div>
+
+        <div class="tab-nav between">
+          <button type="button" class="btn-secondary" onclick="HealthFormView.showTab('habitos', document.querySelector('[data-tab=habitos]'))">← Atrás</button>
+          <button type="button" class="btn-primary btn-submit" id="btn-submit-registro">Guardar y analizar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- RESULTADO PAGE -->
+<div id="page-resultado" class="page">
+  <div class="page-header">
+    <h2>Resultado de tu Análisis</h2>
+    <p>Basado en los datos que ingresaste</p>
+  </div>
+  <div id="resultado-content"></div>
+  <div class="resultado-actions">
+    <button class="btn-secondary" onclick="AppController.showPage('nuevo-registro')">Nuevo registro</button>
+    <button class="btn-primary" id="btn-descargar-pdf">📄 Descargar PDF</button>
+    <button class="btn-primary" onclick="AppController.showPage('dashboard')">Ver dashboard</button>
+  </div>
+</div>
+
+<!-- HISTORIAL PAGE -->
+<div id="page-historial" class="page">
+  <div class="page-header">
+    <h2>Mi Historial de Salud</h2>
+    <p>Todos tus registros anteriores</p>
+    <button class="btn-sm" id="btn-exportar-historial" style="margin-top:0.5rem;">📄 Exportar Historial a PDF</button>
+  </div>
+  <div id="historial-content">
+    <div class="loading">Cargando historial...</div>
+  </div>
+</div>
+
+<!-- ANTECEDENTES PAGE -->
+<div id="page-antecedentes" class="page">
+  <div class="page-header">
+    <h2>Antecedentes Médicos</h2>
+    <p>Información importante para tu atención médica</p>
+  </div>
+  <div class="card">
+    <form id="antecedentes-form">
+      <div class="form-section">
+        <h4>🩺 Enfermedades Crónicas</h4>
+        <div class="checkbox-grid">
+          <label class="checkbox-item"><input type="checkbox" id="ant-diabetes"><span>Diabetes</span></label>
+          <label class="checkbox-item"><input type="checkbox" id="ant-hipertension"><span>Hipertensión</span></label>
+          <label class="checkbox-item"><input type="checkbox" id="ant-asma"><span>Asma</span></label>
+          <label class="checkbox-item"><input type="checkbox" id="ant-cardiopatia"><span>Cardiopatía</span></label>
+        </div>
+      </div>
+      <div class="form-section">
+        <h4>💊 Información Médica</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Grupo Sanguíneo</label>
+            <select id="ant-grupo-sang">
+              <option value="">Seleccionar...</option>
+              <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+              <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+            </select>
+          </div>
+          <div class="form-group toggle-group">
+            <label>¿Tiene discapacidad?</label>
+            <label class="toggle"><input type="checkbox" id="ant-discapacidad"><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+        <div class="form-group" id="tipo-discapacidad-group" style="display:none">
+          <label>Tipo de discapacidad</label>
+          <input type="text" id="ant-tipo-disc" placeholder="Describir tipo de discapacidad">
+        </div>
+        <div class="form-group">
+          <label>Alergias conocidas</label>
+          <textarea id="ant-alergias" rows="2" placeholder="Ej: Penicilina, polvo, mariscos..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Alergias a medicamentos</label>
+          <textarea id="ant-alergias-med" rows="2" placeholder="Ej: Aspirina, ibuprofeno..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Medicamentos actuales</label>
+          <textarea id="ant-medicamentos" rows="2" placeholder="Medicamentos que tomas actualmente..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Cirugías previas</label>
+          <textarea id="ant-cirugias" rows="2" placeholder="Operaciones o procedimientos anteriores..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Enfermedades en la familia</label>
+          <textarea id="ant-enf-familia" rows="2" placeholder="Diabetes, hipertensión, cáncer en familiares..."></textarea>
+        </div>
+      </div>
+      <div id="antecedentes-msg" class="form-success hidden"></div>
+      <button type="button" class="btn-primary" id="btn-guardar-antecedentes">Guardar Antecedentes</button>
+    </form>
+  </div>
+</div>
+
+<!-- PERFIL PAGE -->
+<div id="page-perfil" class="page">
+  <div class="page-header">
+    <h2>Mi Perfil</h2>
+    <p>Administra tu información personal</p>
+  </div>
+  <div class="perfil-grid">
+    <div class="card">
+      <div class="perfil-avatar-section">
+        <div class="perfil-avatar" id="perfil-avatar-big">U</div>
+        <div class="perfil-id">
+          <h3 id="perfil-nombre-completo">—</h3>
+          <p id="perfil-email-display">—</p>
+          <span class="badge" id="perfil-rol-badge">Estudiante</span>
+        </div>
+      </div>
+      <hr>
+      <div class="perfil-info-grid" id="perfil-info-display"></div>
+    </div>
+    <div class="card">
+      <h4>Editar Información</h4>
+      <div class="form-row">
+        <div class="form-group"><label>Nombres</label><input type="text" id="edit-nombres"></div>
+        <div class="form-group"><label>Apellidos</label><input type="text" id="edit-apellidos"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Carnet de Identidad</label><input type="text" id="edit-carnet"></div>
+        <div class="form-group"><label>Fecha de Nacimiento</label><input type="date" id="edit-fecha-nac"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Sexo</label><select id="edit-sexo"><option value="">Seleccionar...</option><option value="masculino">Masculino</option><option value="femenino">Femenino</option></select></div>
+        <div class="form-group"><label>Teléfono</label><input type="tel" id="edit-telefono"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Dirección</label><input type="text" id="edit-direccion"></div>
+        <div class="form-group"><label>Ciudad</label><input type="text" id="edit-ciudad"></div>
+      </div>
+      <hr>
+      <div class="form-row">
+        <div class="form-group"><label>Código Universitario</label><input type="text" id="edit-codigo-uni"></div>
+        <div class="form-group"><label>Semestre</label><select id="edit-semestre"><option value="">Seleccionar...</option><option value="1">1°</option><option value="2">2°</option><option value="3">3°</option><option value="4">4°</option><option value="5">5°</option><option value="6">6°</option><option value="7">7°</option><option value="8">8°</option></select></div>
+      </div>
+      <div class="form-group"><label>Carrera</label><input type="text" id="edit-carrera"></div>
+      <div class="form-group"><label>Facultad</label><select id="edit-facultad"><option value="">Seleccionar...</option><option value="FICCT">FICCT</option><option value="FCE">FCE</option><option value="FD">FD</option></select></div>
+      <div id="perfil-msg" class="form-success hidden"></div>
+      <button class="btn-primary" id="btn-guardar-perfil">Guardar cambios</button>
+      <hr>
+      <h4>Cambiar Contraseña</h4>
+      <div class="form-group"><label>Contraseña actual</label><input type="password" id="pwd-actual"></div>
+      <div class="form-group"><label>Nueva contraseña</label><input type="password" id="pwd-nuevo"></div>
+      <div class="form-group"><label>Confirmar nueva contraseña</label><input type="password" id="pwd-confirmar"></div>
+      <div id="pwd-msg" class="form-error hidden"></div>
+      <button class="btn-secondary" id="btn-cambiar-password">Cambiar contraseña</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PAGE -->
+<div id="page-admin" class="page">
+  <div class="page-header">
+    <h2>Panel de Administración</h2>
+    <p>Gestión de usuarios y registros del sistema</p>
+  </div>
+  <div class="stats-grid" id="admin-stats"></div>
+  <div class="card mt-4">
+    <div class="card-header">
+      <h3>Usuarios Registrados</h3>
+      <input type="text" id="admin-search" placeholder="Buscar..." style="max-width:300px">
+    </div>
+    <div id="admin-table-container">
+      <div class="loading">Cargando usuarios...</div>
+    </div>
+  </div>
+</div>
+
+  </main>
+</div>  
+
+<div id="toast" class="toast hidden">
+  <span id="toast-msg"></span>
+</div>
+
+<!-- 1. CONFIGURACIÓN (AppState, supabase) -->
+<script src="js/config/superbase.js"></script>
+
+<!-- 2. UTILIDADES -->
+<script src="js/utils/herpes.js"></script>
+
+<!-- 3. MODELOS -->
+<script src="js/models/AuthModel.js"></script>
+<script src="js/models/UserModel.js"></script>
+<script src="js/models/HealthRecordModel.js"></script>
+<script src="js/models/MedicalHistoryModel.js"></script>
+<script src="js/models/IAModel.js"></script>
+<script src="js/models/PDFModel.js"></script>
+
+<!-- 4. VISTAS -->
+<script src="js/views/Components.js"></script>
+<script src="js/views/AuthView.js"></script>
+<script src="js/views/DashboardView.js"></script>
+<script src="js/views/HealthFormView.js"></script>
+<script src="js/views/HistorialView.js"></script>
+<script src="js/views/AntecedentesView.js"></script>
+<script src="js/views/PerfilView.js"></script>
+<script src="js/views/AdminView.js"></script>
+
+<!-- 5. CONTROLADORES (IMPORTANTE: Van DESPUÉS de las vistas) -->
+<script src="js/controllers/AuthController.js"></script>
+<script src="js/controllers/DashboardController.js"></script>
+<script src="js/controllers/HealthController.js"></script>
+<script src="js/controllers/UserController.js"></script>
+<script src="js/controllers/AdminController.js"></script>
+
+<!-- 6. APP PRINCIPAL (SIEMPRE AL FINAL) -->
+<script src="js/app.js"></script>
+
+
+</body>
+</html>
